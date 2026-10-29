@@ -1,83 +1,78 @@
-# Cris — Early Access / Waitlist
+# Cris Waitlist — Single Next.js JavaScript application
 
-Responsive SaaS marketing landing page + secure waitlist API, implemented in **JavaScript/JSX and Python only**. No TypeScript files. Inspired by the supplied Cris product flyer and architecture.
+A Next.js 15 App Router monolith. **No TypeScript, no FastAPI, no App Runner.**
+Preserves the Cris design, images, form, and favicon from the original project.
 
-## Included
-
-- Next.js App Router + Tailwind CSS, five feature cards, three target-industry cards, responsive hero, smooth-scrolling sticky header, how-it-works, SEO metadata.
-- React Hook Form and Zod form: name, work email, company, industry, optional title, company size, optional message; loading/success/error states.
-- FastAPI/Pydantic + MongoDB Atlas `waitlist` collection with unique email index, `created_at`, `source: landing_page`.
-- Input allowlisting, honeypot, restricted CORS, API rate limit of five submissions per IP per hour.
-- `Request a Demo` opens a pre-addressed email (change `NEXT_PUBLIC_DEMO_EMAIL`).
-- Initial draft Privacy/Terms pages: **replace with reviewed policies before publishing**.
-
-## Requirements
-
-- Node.js 20.9+ and npm (Node.js 22 recommended)
-- Python 3.11+ and MongoDB Atlas with an allowed IP/network path
-
-## 1 — Configure MongoDB Atlas
-
-Create a cluster/database user with write privileges restricted to your database and allow networking from your backend host. Copy the Atlas connection string into `backend/.env`. Never put Atlas credentials in a frontend environment variable.
-
-## 2 — Run backend (Windows PowerShell)
-
-```powershell
-cd backend
-py -m venv .venv
-.\.venv\Scripts\Activate.ps1
-pip install -r requirements.txt
-Copy-Item .env.example .env
-# Edit .env with your Atlas connection string and correct ALLOWED_ORIGINS
-uvicorn main:app --reload --host 127.0.0.1 --port 8000
-```
-
-macOS/Linux: `python3 -m venv .venv && source .venv/bin/activate`, then the same pip/uvicorn commands.
-
-## 3 — Run frontend (in another terminal)
-
-```powershell
-cd frontend
-npm install
-Copy-Item .env.example .env.local
-npm run dev
-```
-
-Open http://localhost:3000. To run a production frontend build: `npm run build && npm run start`.
-
-## 4 — Deploy
-
-1. Push the root folder to GitHub. In AWS Amplify, connect the repository and set the **app root** to `frontend` (or use the included monorepo `amplify.yml` from repository root). Enable the appropriate Amplify Next.js SSR/compute hosting capability.
-2. Set `NEXT_PUBLIC_API_BASE_URL=https://api.yourdomain.com` and `NEXT_PUBLIC_DEMO_EMAIL=your-real-contact@yourdomain.com` as frontend environment variables. Rebuild after changing `NEXT_PUBLIC_` values.
-3. Deploy `backend/` separately to App Runner/ECS (or another compatible Python hosting service). Provide `MONGODB_URI`, `MONGODB_DB`, `ALLOWED_ORIGINS=https://waitlist.yourdomain.com`, and a durable Redis rate-limit backend when using multiple instances. Use AWS Secrets Manager or host secret settings; never commit `.env`.
-4. Set up HTTPS, correct frontend/backend custom domains, network access to Atlas, and a suitable health check (`/health`).
-5. Test the real waitlist request, duplicate signup, rate limit, and mobile layout against the deployed API before publishing.
-6. Deploy privacy/terms policies and update your public demo contact address. Configure SES or Resend later when you add actual email notifications; there is currently **no email-sending side effect**, so you do not need either provider yet.
-
-## Security / production notes
-
-- Rate limiter uses `memory://` for local single-process development. Multi-process or multi-instance hosting MUST configure shared Redis using `REDIS_URL`, and your ingress should apply additional WAF/bot limits.
-- The limiter uses `request.client.host`. Behind a reverse proxy, configure Uvicorn `--proxy-headers --forwarded-allow-ips=<TRUSTED_PROXY_IPS>` (the actual ingress IP range), and ensure your proxy **removes untrusted client-supplied forwarded headers**. Never trust arbitrary `X-Forwarded-For` headers. Incorrect configuration means many users may share one rate limit or may spoof addresses.
-- Email uniqueness is case-insensitive because it is normalized lowercase. The API deliberately returns the same success message for existing addresses to avoid enumeration.
-- The fields use restrictive plain-text validation. Consider loosening patterns to accept legitimate organization names or punctuation if needed while continuing to reject markup. Never put untrusted input into HTML or raw database operators.
-- The honeypot is not a substitute for CAPTCHA, WAF, or abuse monitoring; add a challenge if spam becomes significant.
-- The form requests a 'work email' but does not block personal-email domains. If business-only email is mandatory, define a clear policy and add server-side enforcement.
-- `GET /health` confirms the API process is responding, **not** Atlas connectivity; monitor DB readiness separately.
-- The waitlist is not itself a background-check service. Avoid advertising regulatory compliance certifications until formally verified. Obtain legal/privacy review before launch.
-- Before launch: review retention and deletion procedures, consent and email marketing requirements, secure admin access, backups, indexes, cloud monitoring, accessibility and test coverage.
-
-## Source structure
+## Folder structure
 
 ```
-cris-waitlist/
-├── frontend/
-│   ├── app/ (page.js, layout.js, globals.css, privacy/, terms/)
-│   ├── components/ (Brand.js, WaitlistForm.js)
-│   ├── public/images/cris-product.png
-│   ├── .env.example, package.json, tailwind.config.js, postcss.config.js
-│   └── jsconfig.json, next.config.js
-├── backend/
-│   ├── main.py, requirements.txt, .env.example
-├── amplify.yml
-└── README.md
+src/
+  app/
+    api/waitlist/route.js       # Node.js server-side POST handler
+    page.js                     # Cris landing page
+    layout.js                   # SEO + favicon
+    globals.css
+    privacy/page.js
+    terms/page.js
+  components/
+    Brand.js
+    WaitlistForm.js
+  lib/
+    mongodb.js                  # Server-only MongoDB connection
+    validation.js               # Shared server validation
+public/images/cris-product.png
+scripts/setup-indexes.mjs
+amplify.yml
 ```
+
+## Windows local setup
+
+1. Open the project folder in VS Code.
+2. `npm install`
+3. Copy `.env.example` to `.env.local` and replace placeholder values. **Rotate any MongoDB password previously shared in a screenshot.**
+4. Generate a random key: `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"` and set `RATE_LIMIT_SECRET`.
+5. Create indexes (PowerShell):
+   ```powershell
+   $env:MONGODB_URI = 'mongodb+srv://...'
+   $env:MONGODB_DB = 'cris_waitlist'
+   node scripts/setup-indexes.mjs
+   Remove-Item Env:MONGODB_URI
+   Remove-Item Env:MONGODB_DB
+   ```
+6. `npm run dev` and visit http://localhost:3000.
+
+The browser now sends `POST /api/waitlist` to the **same domain**; no CORS or separate backend URL needed.
+
+## AWS Amplify Hosting deployment
+
+1. Push **the files in this project folder** to the root of your repository's `master` branch.
+2. In Amplify connect that branch. **Uncheck 'My app is a monorepo'** when this folder is the Git repository root. If committed within a subdirectory, use the actual subdirectory as app root and adapt the build configuration.
+3. Keep the supplied `amplify.yml` at the repository root, with artifacts `.next`. Deploy using **Next.js SSR / Web Compute**, not a static export.
+4. Set `MONGODB_DB`, `RATE_LIMIT_SECRET`, and `MONGODB_URI` using secure environment handling. **Use AWS Secrets Manager for the MongoDB credential** where supported; avoid exposing it in build logs or Git. Amplify SSR server-side runtimes must actually receive these values: check your Amplify region/runtime documentation.
+5. If your Amplify SSR app requires explicit environment injection, append ONLY the required server-side variables to `.env.production` during build, never echo their values into logs. See AWS Amplify Next.js environment-variable docs. An example build step (for values populated from protected build variables):
+   ```sh
+   printf 'MONGODB_URI=%s\nMONGODB_DB=%s\nRATE_LIMIT_SECRET=%s\n' "$MONGODB_URI" "$MONGODB_DB" "$RATE_LIMIT_SECRET" >> .env.production
+   ```
+   **This places secrets in build artifacts; limit build/deployment access, use platform-supported runtime secrets where possible.** Do not use NEXT_PUBLIC_ prefix for secrets.
+6. Ensure MongoDB Atlas allows connections from the Amplify compute environment. SSR instances may use changing outbound IPs. Prefer a controlled outbound networking solution or additional Atlas authentication controls; an unrestricted Atlas IP allowlist is a security compromise, not a recommended default.
+7. Deploy and verify `/api/waitlist` from the same public hostname, submit a test registration, and inspect MongoDB.
+
+### Security considerations
+
+- Zod validates submitted JSON on server and client; HTML-like content is rejected.
+- DB collection `waitlist` stores `created_at` and `source`.
+- Idempotent outward response for repeated email; create a **unique `email` index** using the script before launch.
+- Rate limiting uses shared MongoDB hourly counters; default keys are based on user-agent if trusted source IP isn't available. This is **not a complete bot protection solution**. Add AWS WAF, managed challenge/CAPTCHA, and abuse monitoring for public exposure. Do not enable trust in forwarded IP unless your trusted proxy overwrites user-supplied headers.
+- Keep `MONGODB_URI` and `RATE_LIMIT_SECRET` server-only; do not commit `.env.local`.
+- No email sending is enabled; optional SES/Resend is a later phase.
+- Privacy/Terms pages are templates and should be reviewed before public use.
+- Amplify SSR incurs request/compute charges, but avoids an independent always-on App Runner service. Monitor your AWS Billing console and configure a budget alert.
+
+## End-to-end checks
+
+- `npm install`, `npm run build`, `npm run dev`
+- Visit homepage, verify favicon/images and links.
+- POST a valid test form; check for HTTP 201 and MongoDB record.
+- Post same email; expect success-style message but no second record.
+- Invalid form should fail validation.
+- API must run on the Node.js runtime, not static export/Edge.

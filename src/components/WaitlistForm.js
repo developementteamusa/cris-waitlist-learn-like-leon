@@ -22,8 +22,7 @@ export default function WaitlistForm(){
  const [status,setStatus]=useState('idle');const [serverMessage,setServerMessage]=useState('');
  const {register,handleSubmit,formState:{errors,isSubmitting},reset}=useForm({resolver:zodResolver(schema),defaultValues:{full_name:'',email:'',company_name:'',industry:'',role:'',company_size:'',message:'',website:''}});
  async function submit(data){setStatus('loading');setServerMessage('');try{
-  const api=(process.env.NEXT_PUBLIC_API_BASE_URL||'http://127.0.0.1:8000').replace(/\/$/,'');
-  const response=await fetch(`${api}/api/v1/waitlist`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
+  const response=await fetch('/api/waitlist',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
   const result=await response.json().catch(()=>({}));
   if(!response.ok){throw new Error(typeof result.detail==='string'?result.detail:'Unable to submit right now. Please try again.');}
   setStatus('success');setServerMessage(result.message||"You're on the list!");reset();
