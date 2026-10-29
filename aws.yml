@@ -1,0 +1,23 @@
+version: 1
+frontend:
+  phases:
+    preBuild:
+      commands:
+        - echo "⏳ Installation des dépendances..."
+        - npm ci
+    build:
+      commands:
+
+        - echo "⚙️ Configuration des variables d'environnement..."
+        - env | grep -e REACT_APP_DATABASE_URL -e NEXT_PUBLIC_  >> .env.production
+        # - env | grep -e NEXT_PUBLIC_ >> .env.production
+        - echo "🏗️ Lancement de la build..."
+        - npm run build
+  artifacts:
+    baseDirectory: .next
+    files:
+      - '**/*'
+  cache:
+    paths:
+      - node_modules/**/*
+      - .next/cache/**/*

@@ -20,11 +20,11 @@ from starlette.middleware.trustedhost import TrustedHostMiddleware
 log = logging.getLogger('cris.waitlist')
 
 class Settings(BaseSettings):
-    mongodb_uri: str
-    mongodb_db: str = 'Learn-Like-Leon'
-    allowed_origins: str = 'http://localhost:3000'
+    react_app_mongodb_uri: str
+    react_app_mongodb_db: str = 'Learn-Like-Leon'
+    react_app_allowed_origins: str = 'http://localhost:3000'
     redis_url: str = ''
-    trust_proxy_headers: bool = False
+    react_app_trust_proxy_headers: bool = False
     model_config = SettingsConfigDict(env_file='.env', extra='ignore')
 
 @lru_cache
@@ -92,10 +92,10 @@ app = FastAPI(title='Cris Waitlist API', version='1.0.0', docs_url=None, redoc_u
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, lambda request, exc: JSONResponse(status_code=429, content={'detail':'Too many submissions. Please try again later.'}))
 app.add_middleware(SlowAPIMiddleware)
-app.add_middleware(CORSMiddleware, allow_origins=[s.strip() for s in config.allowed_origins.split(',') if s.strip()], allow_methods=['POST','GET'], allow_headers=['Content-Type'], allow_credentials=False)
+app.add_middleware(CORSMiddleware, allow_origins=[s.strip() for s in config.react_app_allowed_origins.split(',') if s.strip()], allow_methods=['POST','GET'], allow_headers=['Content-Type'], allow_credentials=False)
 
-client = MongoClient(config.mongodb_uri, serverSelectionTimeoutMS=5000, connectTimeoutMS=5000)
-collection = client[config.mongodb_db]['waitlist']
+client = MongoClient(config.react_app_mongodb_uri, serverSelectionTimeoutMS=5000, connectTimeoutMS=5000)
+collection = client[config.react_app_mongodb_db]['waitlist']
 
 @app.on_event('startup')
 def create_indexes():
