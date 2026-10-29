@@ -45,10 +45,6 @@ export async function POST(request) {
     const entries = db.collection('waitlist');
     const counters = db.collection('waitlist_rate_limits');
 
-    // Shared MongoDB counter across Amplify server instances. This is a baseline
-    // anti-abuse measure, not a substitute for WAF/CAPTCHA at higher traffic.
-    // Without a trusted proxy identity, use the edge-provided forwarded address
-    // only if it has been explicitly enabled in the deployment configuration.
     const forwardingEnabled = process.env.REACT_APP_TRUST_AMPLIFY_FORWARDED_IP === 'true';
     const ip = forwardingEnabled
       ? (request.headers.get('x-forwarded-for') || '').split(',')[0].trim().slice(0, 80)
