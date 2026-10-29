@@ -1,0 +1,21 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+:root { color-scheme:light; }
+html {scroll-behavior:smooth;}
+body {background:#f8fbff; color:#07183f; -webkit-font-smoothing:antialiased;}
+::selection {background:#bae6fd;color:#07183f;}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*:before,*:after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+.hero-glow {background:radial-gradient(ellipse at 70% 36%,rgba(87,171,255,.22),transparent 52%),radial-gradient(ellipse at 98% 70%,rgba(65,219,146,.13),transparent 34%);}
+.grid-pattern {background-image:linear-gradient(rgba(29,79,151,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(29,79,151,.04) 1px,transparent 1px);background-size:34px 34px;mask-image:linear-gradient(to bottom,black,transparent)}
+.glass {background:rgba(255,255,255,.82);backdrop-filter:blur(18px);}
+.gradient-text {background:linear-gradient(95deg,#1250e4,#187afa);-webkit-background-clip:text;background-clip:text;color:transparent;}
+.btn-primary {background:linear-gradient(110deg,#1761f2,#1046d5);color:white;box-shadow:0 12px 26px rgba(19,83,235,.23);transition:transform .2s,box-shadow .2s;}
+.btn-primary:hover {transform:translateY(-2px);box-shadow:0 16px 30px rgba(19,83,235,.30);}
+.btn-primary:focus-visible,.btn-outline:focus-visible,a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid #62a5ff;outline-offset:3px}
+.btn-outline{border:1px solid #cbd8ec;background:white;color:#0c2458;transition:transform .2s,border-color .2s,background .2s}
+.btn-outline:hover{transform:translateY(-2px);border-color:#1557ee;background:#f4f9ff}
+.field {width:100%;border:1px solid #d8e3f1;background:#fff;border-radius:12px;padding:13px 15px;outline:none;transition:border-color .15s,box-shadow .15s;font-size:14px;color:#07183f}
+.field:focus {border-color:#1557ee;box-shadow:0 0 0 3px rgba(21,87,238,.11)}
+.field::placeholder{color:#94a3b8}
+.section-wrap{max-width:1200px;margin-inline:auto;padding-inline:24px}
