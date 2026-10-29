@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
-const allowedText = /^[\p{L}\p{M}\p{N} .,'’()&+\\-/!?\n\r]*$/u;
+// const allowedText = /^[\p{L}\p{M}\p{N} .,'’()&+\\-/!?\n\r]*$/u;
+const allowedText = /^[\p{L}\p{M}\p{N} .,'’()&+\/!?\n\r-]*$/u;
 const safe = (max) => z.string().trim().max(max).refine(
   value => allowedText.test(value),
   'Use ordinary text without markup or special characters.'
