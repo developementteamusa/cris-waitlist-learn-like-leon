@@ -84,9 +84,26 @@ export async function POST(request) {
     }
     return json({ message: successMessage }, 201);
   } catch (error) {
-    console.error('Cris waitlist submission error', error?.name || 'Unknown');
-    return json({ detail: 'Service temporarily unavailable. Please try again later.' }, 503);
-  }
+  console.error("CRIS_WAITLIST_ERROR", {
+    name: error?.name || "Unknown",
+    code: error?.code || "UNKNOWN",
+    message:
+      error?.name === "MongoServerSelectionError"
+        ? "MongoDB server selection failed"
+        : "Server operation failed",
+    mongodbConfigured: Boolean(process.env.MONGODB_URI),
+    databaseConfigured: Boolean(process.env.MONGODB_DB),
+    secretConfigured:
+      (process.env.RATE_LIMIT_SECRET?.length || 0) >= 32,
+  });
+
+  return json(
+    {
+      detail: "Service temporarily unavailable. Please try again later."
+    },
+    503
+  );
+}
 }
 
 export async function GET() {
