@@ -3,6 +3,12 @@ import { MongoClient } from 'mongodb';
 // The database connection is established only in server-side route handlers.
 let clientPromise;
 export function getMongoClient() {
+
+  console.log("CRIS_MONGODB_CONFIGURATION", {
+  uriAvailable: Boolean(process.env.MONGODB_URI),
+  databaseAvailable: Boolean(process.env.MONGODB_DB),
+});
+
   const uri = process.env.MONGODB_URI;
   if (!uri) throw new Error('MONGODB_URI has not been configured.');
   if (!clientPromise) {
