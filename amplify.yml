@@ -1,16 +1,37 @@
+
 version: 1
+
 frontend:
   phases:
     preBuild:
       commands:
-        - npm install
+        - npm ci
+
     build:
       commands:
+        # Verify that required variables exist in Amplify.
+        # Never print their actual values.
+        - |
+          for name in MONGODB_URI MONGODB_DB RATE_LIMIT_SECRET; do
+            if [ -z "$(printenv "$name")" ]; then
+              echo "ERROR: Missing required variable $name"
+              exit 1
+            fi
+            echo "Verified $name"
+          done
+
+        # Make selected variables available to Next.js SSR.
+        - |
+          env | grep -E '^(MONGODB_URI|MONGODB_DB|RATE_LIMIT_SECRET|TRUST_AMPLIFY_FORWARDED_IP|NEXT_PUBLIC_DEMO_EMAIL)=' > .env.production
+
+        # Build the Next.js application.
         - npm run build
+
   artifacts:
     baseDirectory: .next
     files:
       - '**/*'
+
   cache:
     paths:
       - node_modules/**/*
