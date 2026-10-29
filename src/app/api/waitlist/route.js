@@ -49,12 +49,12 @@ export async function POST(request) {
     // anti-abuse measure, not a substitute for WAF/CAPTCHA at higher traffic.
     // Without a trusted proxy identity, use the edge-provided forwarded address
     // only if it has been explicitly enabled in the deployment configuration.
-    const forwardingEnabled = process.env.TRUST_AMPLIFY_FORWARDED_IP === 'true';
+    const forwardingEnabled = process.env.REACT_APP_TRUST_AMPLIFY_FORWARDED_IP === 'true';
     const ip = forwardingEnabled
       ? (request.headers.get('x-forwarded-for') || '').split(',')[0].trim().slice(0, 80)
       : 'unknown';
     const agent = (request.headers.get('user-agent') || 'unknown').slice(0, 150);
-    const secret = process.env.RATE_LIMIT_SECRET;
+    const secret = process.env.REACT_APP_RATE_LIMIT_SECRET;
     if (!secret || secret.length < 32) {
       console.error('RATE_LIMIT_SECRET is missing or too short');
       return json({ detail: 'Service temporarily unavailable. Please try again later.' }, 503);
